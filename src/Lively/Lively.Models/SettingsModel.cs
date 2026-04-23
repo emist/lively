@@ -1,4 +1,4 @@
-﻿using Lively.Models.Enums;
+using Lively.Models.Enums;
 using System;
 using System.IO;
 
@@ -139,6 +139,14 @@ namespace Lively.Models
         public DisplayAudioMode DisplayAudioOutput { get; set; }
         public DisplayMonitor SelectedAudioOutputDisplay { get; set; }
         public bool IsRestartAfterLockscreen { get; set; }
+        /// <summary>
+        /// Periodically reload web/URL wallpapers.
+        /// </summary>
+        public bool WebWallpaperAutoReload { get; set; }
+        /// <summary>
+        /// Auto-reload interval in minutes.
+        /// </summary>
+        public int WebWallpaperAutoReloadIntervalMin { get; set; }
 
         public SettingsModel()
         {
@@ -227,6 +235,8 @@ namespace Lively.Models
             VisualizerAudioDeviceId = string.Empty;
             DisplayAudioOutput = DisplayAudioMode.all;
             IsRestartAfterLockscreen = false;
+            WebWallpaperAutoReload = false;
+            WebWallpaperAutoReloadIntervalMin = 30;
         }
     }
 }

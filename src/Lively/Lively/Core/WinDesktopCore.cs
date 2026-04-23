@@ -1,4 +1,4 @@
-﻿using Lively.Common;
+using Lively.Common;
 using Lively.Common.Com;
 using Lively.Common.Exceptions;
 using Lively.Common.Extensions;
@@ -40,6 +40,7 @@ namespace Lively.Core
         private bool disposedValue;
         private bool isRaisedDesktopWithLayeredShellView;
         private readonly List<WallpaperLayoutModel> wallpapersDisconnected = [];
+        private System.Threading.Timer autoReloadTimer;
 
         private int prevExplorerPid = GetTaskbarExplorerPid();
         private DateTime prevExplorerCrashTime = DateTime.MinValue;
@@ -117,6 +118,48 @@ namespace Lively.Core
             {
                 Logger.Error($"WorkerW hook failed: {ex.Message}");
             }
+
+            // Start auto-reload timer if enabled
+            StartAutoReloadTimer();
+        }
+
+        /// <summary>
+        /// Starts (or restarts) the auto-reload timer for web wallpapers.
+        /// </summary>
+        public void StartAutoReloadTimer()
+        {
+            StopAutoReloadTimer();
+            if (!userSettings.Settings.WebWallpaperAutoReload)
+                return;
+
+            var intervalMs = userSettings.Settings.WebWallpaperAutoReloadIntervalMin * 60 * 1000;
+            autoReloadTimer = new System.Threading.Timer(_ =>
+            {
+                try
+                {
+                    var reloadMsg = new LivelyReloadCmd();
+                    foreach (var wp in Wallpapers)
+                    {
+                        if (wp.Category is WallpaperType.web or WallpaperType.webaudio or WallpaperType.url)
+                            wp.SendMessage(reloadMsg);
+                    }
+                    Logger.Info($"Auto-reload: sent reload to web wallpapers (interval: {userSettings.Settings.WebWallpaperAutoReloadIntervalMin}min)");
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error($"Auto-reload error: {ex.Message}");
+                }
+            }, null, intervalMs, intervalMs);
+            Logger.Info($"Auto-reload timer started ({userSettings.Settings.WebWallpaperAutoReloadIntervalMin}min)");
+        }
+
+        /// <summary>
+        /// Stops the auto-reload timer.
+        /// </summary>
+        public void StopAutoReloadTimer()
+        {
+            autoReloadTimer?.Dispose();
+            autoReloadTimer = null;
         }
 
         private void SetupDesktopLayer()
@@ -904,6 +947,7 @@ namespace Lively.Core
                 });
                 wallpapers.Clear();
                 watchdog.Clear();
+                StopAutoReloadTimer();
 
                 if (fireEvent)
                     WallpaperChanged?.Invoke(this, EventArgs.Empty);
@@ -1297,6 +1341,7 @@ namespace Lively.Core
                 {
                     WallpaperChanged -= SetupDesktop_WallpaperChanged;
                     workerWHook?.Dispose();
+                    StopAutoReloadTimer();
                     CloseAllWallpapers(false);
                     RefreshDesktop();
 

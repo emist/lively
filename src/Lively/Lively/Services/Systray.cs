@@ -1,4 +1,4 @@
-﻿using Lively.Common;
+using Lively.Common;
 using Lively.Common.Factories;
 using Lively.Common.Helpers;
 using Lively.Common.Services;
@@ -7,6 +7,7 @@ using Lively.Core.Display;
 using Lively.Core.Suspend;
 using Lively.Models;
 using Lively.Models.Enums;
+using Lively.Models.Message;
 using Lively.Models.Services;
 using Lively.Themes;
 using Lively.Views;
@@ -114,6 +115,19 @@ namespace Lively.Services
             customiseWallpaperMenu.Click += CustomiseWallpaper;
             notifyIcon.ContextMenuStrip.Items.Add(customiseWallpaperMenu);
             trayMenuItems[TrayMenuItem.customiseWallpaper] = customiseWallpaperMenu;
+
+            var refreshWallpaperMenu = new ToolStripMenuItem("Refresh Wallpaper", null);
+            refreshWallpaperMenu.Click += (s, e) =>
+            {
+                var reloadMsg = new LivelyReloadCmd();
+                foreach (var wp in desktopCore.Wallpapers)
+                {
+                    if (wp.Category is WallpaperType.web or WallpaperType.webaudio or WallpaperType.url)
+                        wp.SendMessage(reloadMsg);
+                }
+            };
+            notifyIcon.ContextMenuStrip.Items.Add(refreshWallpaperMenu);
+            trayMenuItems[TrayMenuItem.refreshWallpaper] = refreshWallpaperMenu;
 
             // Update check, only create on installer build.
             if (!PackageUtil.IsRunningAsPackaged)
@@ -401,6 +415,7 @@ namespace Lively.Services
                 TrayMenuItem.exitApp => i18n.GetString("TextExit"),
                 TrayMenuItem.pauseWallpaper => i18n.GetString("TextPauseWallpapers"),
                 TrayMenuItem.customiseWallpaper => i18n.GetString("TextCustomiseWallpaper"),
+                TrayMenuItem.refreshWallpaper => "Refresh Wallpaper",
                 TrayMenuItem.updateApp => i18n.GetString("TextUpdateChecking"),
                 _ => throw new NotImplementedException(),
             };
@@ -416,6 +431,7 @@ namespace Lively.Services
             exitApp,
             pauseWallpaper,
             customiseWallpaper,
+            refreshWallpaper,
             updateApp
         }
 

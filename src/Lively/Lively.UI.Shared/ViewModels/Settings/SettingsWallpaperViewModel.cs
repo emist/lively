@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Lively.Common;
 using Lively.Common.Factories;
@@ -67,6 +67,9 @@ namespace Lively.UI.Shared.ViewModels
             CefDiskCache = userSettings.Settings.CefDiskCache;
             SelectedWallpaperStreamQualityIndex = (int)userSettings.Settings.StreamQuality;
             DetectStreamWallpaper = userSettings.Settings.AutoDetectOnlineStreams;
+            WebWallpaperAutoReload = userSettings.Settings.WebWallpaperAutoReload;
+            var savedInterval = userSettings.Settings.WebWallpaperAutoReloadIntervalMin;
+            SelectedAutoReloadIntervalIndex = AutoReloadIntervals.IndexOf(savedInterval) is int idx && idx >= 0 ? idx : 3; // default to 30min
             // AudioDevices is populated only when IsShowAudioDevices is true for better UX.
         }
 
@@ -373,6 +376,43 @@ namespace Lively.UI.Shared.ViewModels
                     UpdateSettingsConfigFile();
                 }
                 SetProperty(ref _detectStreamWallpaper, value);
+            }
+        }
+
+        // Auto-reload interval options (in minutes)
+        public List<int> AutoReloadIntervals { get; } = [5, 10, 15, 30, 60, 360, 720, 1440];
+
+        private bool _webWallpaperAutoReload;
+        public bool WebWallpaperAutoReload
+        {
+            get => _webWallpaperAutoReload;
+            set
+            {
+                if (userSettings.Settings.WebWallpaperAutoReload != value)
+                {
+                    userSettings.Settings.WebWallpaperAutoReload = value;
+                    UpdateSettingsConfigFile();
+                }
+                SetProperty(ref _webWallpaperAutoReload, value);
+            }
+        }
+
+        private int _selectedAutoReloadIntervalIndex;
+        public int SelectedAutoReloadIntervalIndex
+        {
+            get => _selectedAutoReloadIntervalIndex;
+            set
+            {
+                if (value >= 0 && value < AutoReloadIntervals.Count)
+                {
+                    var minutes = AutoReloadIntervals[value];
+                    if (userSettings.Settings.WebWallpaperAutoReloadIntervalMin != minutes)
+                    {
+                        userSettings.Settings.WebWallpaperAutoReloadIntervalMin = minutes;
+                        UpdateSettingsConfigFile();
+                    }
+                }
+                SetProperty(ref _selectedAutoReloadIntervalIndex, value);
             }
         }
 

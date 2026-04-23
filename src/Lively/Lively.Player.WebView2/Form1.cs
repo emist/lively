@@ -1,4 +1,4 @@
-﻿using CommandLine;
+using CommandLine;
 using Lively.Common;
 using Lively.Common.Extensions;
 using Lively.Common.Helpers;
@@ -487,19 +487,14 @@ namespace Lively.Player.WebView2
             switch (obj.Type)
             {
                 case MessageType.cmd_reload:
-                    // ConnectionAborted issue.
-                    //try
-                    //{
-                    //    webView?.Reload();
-                    //}
-                    //catch (Exception ie)
-                    //{
-                    //    WriteToParent(new LivelyMessageConsole()
-                    //    {
-                    //        Category = ConsoleMessageType.error,
-                    //        Message = $"Reload failed: {ie.Message}"
-                    //    });
-                    //}
+                    try
+                    {
+                        webView?.Reload();
+                    }
+                    catch (Exception ie)
+                    {
+                        ie.SendError(SendToParent, "Reload failed");
+                    }
                     break;
                 case MessageType.cmd_suspend:
                     await HandleSuspend();

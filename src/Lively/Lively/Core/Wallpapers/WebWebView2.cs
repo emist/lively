@@ -1,4 +1,4 @@
-﻿using Lively.Common;
+using Lively.Common;
 using Lively.Common.Exceptions;
 using Lively.Common.Extensions;
 using Lively.Common.Helpers;
