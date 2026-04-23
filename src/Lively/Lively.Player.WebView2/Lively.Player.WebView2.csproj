@@ -6,36 +6,36 @@
     <RootNamespace>Lively.Player.WebView2</RootNamespace>
     <AssemblyName>Lively.Player.WebView2</AssemblyName>
     <LangVersion>8.0</LangVersion>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <Deterministic>true</Deterministic>
-    <ApplicationManifest>app.manifest</ApplicationManifest>
-    <ApplicationIcon>appicon.ico</ApplicationIcon>
+    <PlatformTarget>x64</PlatformTarget>
     <UseWindowsForms>true</UseWindowsForms>
-    <PlatformTarget>x64</PlatformTarget>
+
+    <!-- Match legacy build: use existing AssemblyInfo.cs, no auto-generated attributes -->
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <!-- Match legacy build: deterministic output -->
+    <Deterministic>true</Deterministic>
+    <!-- Match legacy build: auto-generate binding redirects -->
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <!-- Use existing app.manifest -->
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- Use existing icon -->
+    <ApplicationIcon>appicon.ico</ApplicationIcon>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
-    <PlatformTarget>x64</PlatformTarget>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
-    <PlatformTarget>x64</PlatformTarget>
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="CommandLineParser" Version="2.9.1" />
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3595.46" />
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Lively.Common.Services\Lively.Common.Services.csproj" />
     <ProjectReference Include="..\Lively.Common\Lively.Common.csproj" />
     <ProjectReference Include="..\Lively.Models\Lively.Models.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="appicon.ico" />
   </ItemGroup>
 
 </Project>
