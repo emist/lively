@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -1613,6 +1613,10 @@ namespace livelywpf
             configure_traybtn.Click += (s, e) => ShowCustomiseWidget();
             _notifyIcon.ContextMenuStrip.Items.Add(configure_traybtn);
 
+            var refresh_traybtn = new System.Windows.Forms.ToolStripMenuItem("Refresh Wallpaper", null);
+            refresh_traybtn.Click += (s, e) => SetupDesktop.ReloadWebWallpapers();
+            _notifyIcon.ContextMenuStrip.Items.Add(refresh_traybtn);
+
             _notifyIcon.ContextMenuStrip.Items.Add("-");
             _notifyIcon.ContextMenuStrip.Items.Add(update_traybtn);
 
@@ -2674,6 +2678,8 @@ namespace livelywpf
             comboBoxWpInputSettings.SelectionChanged += ComboBoxWpInputSettings_SelectionChanged;
             chkboxMouseOtherAppsFocus.Checked += ChkboxMouseOtherAppsFocus_Checked;
             chkboxMouseOtherAppsFocus.Unchecked += ChkboxMouseOtherAppsFocus_Checked;
+            webAutoReloadToggle.IsCheckedChanged += WebAutoReloadToggle_IsCheckedChanged;
+            comboBoxAutoReloadInterval.SelectionChanged += ComboBoxAutoReloadInterval_SelectionChanged;
         }
 
         private void ChkboxMouseOtherAppsFocus_Checked(object sender, RoutedEventArgs e)
@@ -2904,6 +2910,11 @@ namespace livelywpf
             else
                 web_audio_WarningText.Visibility = Visibility.Visible;
 
+            // Web wallpaper auto-reload settings
+            webAutoReloadToggle.IsChecked = SaveData.config.WebWallpaperAutoReload;
+            comboBoxAutoReloadInterval.IsEnabled = SaveData.config.WebWallpaperAutoReload;
+            comboBoxAutoReloadInterval.SelectedIndex = AutoReloadIntervalToIndex(SaveData.config.WebWallpaperAutoReloadIntervalMin);
+
             videoMuteToggle.IsChecked = !SaveData.config.MuteVideo;
 
             // performance ui
@@ -3065,6 +3076,48 @@ namespace livelywpf
             else
                 web_audio_WarningText.Visibility = Visibility.Visible;
         }
+
+        #region web_auto_reload
+        /// <summary>
+        /// Preset interval values in minutes, mapped by ComboBox index.
+        /// </summary>
+        private static readonly int[] autoReloadIntervals = { 5, 10, 15, 30, 60, 360, 720, 1440 };
+
+        private static int AutoReloadIntervalToIndex(int minutes)
+        {
+            for (int i = 0; i < autoReloadIntervals.Length; i++)
+            {
+                if (autoReloadIntervals[i] == minutes)
+                    return i;
+            }
+            return 3; // default: 30 minutes
+        }
+
+        private void WebAutoReloadToggle_IsCheckedChanged(object sender, EventArgs e)
+        {
+            SaveData.config.WebWallpaperAutoReload = webAutoReloadToggle.IsChecked.Value;
+            comboBoxAutoReloadInterval.IsEnabled = webAutoReloadToggle.IsChecked.Value;
+            SaveData.SaveConfig();
+
+            if (SaveData.config.WebWallpaperAutoReload)
+                SetupDesktop.StartAutoReloadTimer();
+            else
+                SetupDesktop.StopAutoReloadTimer();
+        }
+
+        private void ComboBoxAutoReloadInterval_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (comboBoxAutoReloadInterval.SelectedIndex < 0 || comboBoxAutoReloadInterval.SelectedIndex >= autoReloadIntervals.Length)
+                return;
+
+            SaveData.config.WebWallpaperAutoReloadIntervalMin = autoReloadIntervals[comboBoxAutoReloadInterval.SelectedIndex];
+            SaveData.SaveConfig();
+
+            // Restart timer with new interval if auto-reload is enabled
+            if (SaveData.config.WebWallpaperAutoReload)
+                SetupDesktop.StartAutoReloadTimer();
+        }
+        #endregion web_auto_reload
 
         private void ComboBoxFullscreenPerf_SelectionChanged1(object sender, SelectionChangedEventArgs e)
         {

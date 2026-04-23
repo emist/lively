@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -29,6 +29,7 @@ namespace livelywpf
         /// </summary>
         public static List<WallpaperLayout> wallpapers = new List<WallpaperLayout>();
         private static DispatcherTimer dispatcherTimer = new DispatcherTimer();
+        private static System.Threading.Timer autoReloadTimer;
 
         private static IntPtr  workerWOrig, progman, desktopHandle, shellHandle; //handle,
         private static int processID;
@@ -655,6 +656,9 @@ namespace livelywpf
 
                 SaveData.runningPrograms.Add(new SaveData.RunningProgram { ProcessName = webProcess.ProcessName, Pid = webProcess.Id });
                 SaveData.SaveRunningPrograms();
+
+                // Start auto-reload timer if configured (idempotent)
+                StartAutoReloadTimer();
             }
             else if (layout.Type == WallpaperType.godot)
             {
@@ -916,6 +920,59 @@ namespace livelywpf
             }
         }
 
+        /// <summary>
+        /// Sends reload command to all running web wallpaper CEF processes.
+        /// </summary>
+        public static void ReloadWebWallpapers()
+        {
+            try
+            {
+                foreach (var item in webProcesses)
+                {
+                    if (item.Proc != null && !item.Proc.HasExited)
+                    {
+                        item.Proc.StandardInput.WriteLine("Reload");
+                        Logger.Info("Sent Reload to web wallpaper PID:" + item.Proc.Id + " on " + item.DisplayID);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("ReloadWebWallpapers error: " + ex.ToString());
+            }
+        }
+
+        /// <summary>
+        /// Starts the auto-reload timer for web wallpapers if enabled in config.
+        /// </summary>
+        public static void StartAutoReloadTimer()
+        {
+            StopAutoReloadTimer();
+            if (SaveData.config.WebWallpaperAutoReload && SaveData.config.WebWallpaperAutoReloadIntervalMin > 0)
+            {
+                var intervalMs = SaveData.config.WebWallpaperAutoReloadIntervalMin * 60 * 1000;
+                autoReloadTimer = new System.Threading.Timer(
+                    _ => ReloadWebWallpapers(),
+                    null,
+                    intervalMs,
+                    intervalMs);
+                Logger.Info("Auto-reload timer started: " + SaveData.config.WebWallpaperAutoReloadIntervalMin + " min");
+            }
+        }
+
+        /// <summary>
+        /// Stops the auto-reload timer.
+        /// </summary>
+        public static void StopAutoReloadTimer()
+        {
+            if (autoReloadTimer != null)
+            {
+                autoReloadTimer.Dispose();
+                autoReloadTimer = null;
+                Logger.Info("Auto-reload timer stopped.");
+            }
+        }
+
         public static Task ShowPreviewDialogSTAThread(WallpaperLayout layout, IntPtr wallpaperHandle)
         {
             var tcs = new TaskCompletionSource<object>();
@@ -1130,7 +1187,12 @@ namespace livelywpf
                 //Retrieves the windowhandle of cefsubprocess, cefsharp is launching cef as a separate proces..if you add the full pgm as child of workerw then there are problems (prob related sharing input queue)
                 //Instead hiding the pgm window & adding cefrender window instead.
                 Logger.Info("Cefsharp Handle:- " + e.Data);
-                if (e.Data.Contains("HWND")) 
+                if (e.Data.Contains("PAGE_RELOADED"))
+                {
+                    var reloadedProcess = webProcesses.Find(x => x.Proc == sender);
+                    Logger.Info("Web wallpaper page reloaded: " + reloadedProcess?.FilePath);
+                }
+                else if (e.Data.Contains("HWND")) 
                 {
                     var currProcess = webProcesses.Find(x => x.Proc == sender);
 
@@ -2401,6 +2463,7 @@ namespace livelywpf
         /// <param name="applicationExit">if false, clear disk savedata for wp layout</param>
         public static void CloseAllWallpapers(bool applicationExit = false)
         {
+            StopAutoReloadTimer();
             var _timerStatus = dispatcherTimer.IsEnabled;
             if (_timerStatus)
                 dispatcherTimer.Stop();

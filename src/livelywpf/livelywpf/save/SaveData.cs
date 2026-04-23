@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -666,6 +666,16 @@ namespace livelywpf
             /// </summary>
             public bool MouseInputMovAlways { get; set; }
 
+            /// <summary>
+            /// Enable periodic auto-reload for web/URL wallpapers.
+            /// </summary>
+            public bool WebWallpaperAutoReload { get; set; }
+
+            /// <summary>
+            /// Auto-reload interval in minutes for web/URL wallpapers. Min 1, Max 1440 (24h).
+            /// </summary>
+            public int WebWallpaperAutoReloadIntervalMin { get; set; }
+
             //default values
             public ConfigFile()
             {
@@ -727,6 +737,9 @@ namespace livelywpf
                 PreviewGIF = new PreviewGIF();
                 InputForwardMode = 1; //mouse only.
                 MouseInputMovAlways = true;
+
+                WebWallpaperAutoReload = false;
+                WebWallpaperAutoReloadIntervalMin = 30; //30 minutes default
             }
         }
         public static ConfigFile config = new ConfigFile();
