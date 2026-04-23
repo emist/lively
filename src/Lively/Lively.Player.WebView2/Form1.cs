@@ -30,6 +30,9 @@ namespace Lively.Player.WebView2
         private bool isPaused = false;
         private bool isVideoStream = false;
         private int cefD3DRenderingSubProcessId;
+        // SDK-style WinExe sets Console.Out to TextWriter.Null; bypass via raw stdout stream.
+        // Use UTF8 without BOM to prevent JSON parse corruption on the host side.
+        private static readonly StreamWriter stdoutWriter = new StreamWriter(Console.OpenStandardOutput(), new UTF8Encoding(false)) { AutoFlush = true };
 
         private bool initializedServices = false; //delay API init till loaded page
         private IAudioVisualizerService visualizerService;
@@ -434,7 +437,7 @@ namespace Lively.Player.WebView2
                         // Since UTF8 is backward compatible, will work without this reader for non unicode characters.
                         string text = await reader.ReadLineAsync();
                         if (startArgs.VerboseLog)
-                            Console.WriteLine(text);
+                            stdoutWriter.WriteLine(text);
 
                         if (string.IsNullOrEmpty(text))
                         {
@@ -633,7 +636,7 @@ namespace Lively.Player.WebView2
         private void SendToParent(IpcMessage obj)
         {
             if (!IsDebugging)
-                Console.WriteLine(JsonConvert.SerializeObject(obj));
+                stdoutWriter.WriteLine(JsonConvert.SerializeObject(obj));
 
             Debug.WriteLine(JsonConvert.SerializeObject(obj));
         }

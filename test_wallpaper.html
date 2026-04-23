@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+    height: 100vh; font-family: 'Segoe UI', sans-serif;
+    color: #fff; overflow: hidden;
+    transition: background 0.5s;
+  }
+  .counter { font-size: 12vw; font-weight: 900; text-shadow: 0 4px 30px rgba(0,0,0,0.4); }
+  .time { font-size: 3vw; opacity: 0.8; margin-top: 1vh; }
+  .label { font-size: 1.5vw; opacity: 0.5; margin-top: 2vh; letter-spacing: 0.3em; text-transform: uppercase; }
+</style>
+</head>
+<body>
+  <div class="label">Page Load Count</div>
+  <div class="counter" id="count"></div>
+  <div class="time" id="time"></div>
+  <div class="label">Each refresh increments the counter &amp; changes color</div>
+<script>
+  // Increment persistent counter
+  let n = parseInt(localStorage.getItem('refreshCount') || '0') + 1;
+  localStorage.setItem('refreshCount', n);
+  document.getElementById('count').textContent = n;
+
+  // Show load time
+  document.getElementById('time').textContent = 'Loaded: ' + new Date().toLocaleTimeString();
+
+  // Random gradient background
+  const hue1 = Math.floor(Math.random() * 360);
+  const hue2 = (hue1 + 40 + Math.floor(Math.random() * 60)) % 360;
+  document.body.style.background = `linear-gradient(135deg, hsl(${hue1},70%,35%), hsl(${hue2},80%,25%))`;
+</script>
+</body>
+</html>
