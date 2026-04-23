@@ -1,0 +1,20 @@
+# Environment & secrets
+.env
+.env.local
+credentials.json
+token.json
+
+# Intermediate files
+.tmp/
+
+# Node
+node_modules/
+package-lock.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
