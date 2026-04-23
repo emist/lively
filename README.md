@@ -11,6 +11,40 @@
 [![Issues](https://img.shields.io/github/issues/rocksdanister/lively.svg)](https://github.com/rocksdanister/lively/issues)
 [![Crowdin](https://badges.crowdin.net/lively-wallpaper/localized.svg)](https://crowdin.com/project/lively-wallpaper)
 
+---
+
+## Fork Changes
+
+This fork ([emist/lively](https://github.com/emist/lively)) adds **web wallpaper refresh** capabilities to Lively, allowing web-based wallpapers to reload in-place without losing browser sessions or cookies.
+
+### Features Added
+
+- **Manual Refresh** — Right-click the system tray icon → "Refresh Wallpaper" to reload all web wallpapers instantly
+- **Auto-Refresh** — Configure a timer (in minutes) to automatically refresh wallpapers at a set interval
+- **Session Persistence** — Uses `location.reload()` instead of full process restart, preserving login sessions, cookies, and local storage across refreshes
+- **Settings UI** — Toggle and interval controls in Settings → Wallpaper → Web section
+
+### How It Works
+
+The WebView2 player's `cmd_reload` handler is intentionally left as a no-op in source code. A post-build IL patcher injects `ExecuteScriptAsync("location.reload()")` into the compiled binary. This is necessary because modifying the `ProcessMessage` async state machine in source changes its IL layout, which causes WebView2 rendering failures (`ConnectionAborted`) when the player window is embedded into the desktop.
+
+```
+dotnet build -c Release          → Compile source (cmd_reload = no-op)
+tools/WebView2Patcher            → IL-inject location.reload() into cmd_reload
+Deploy to plugins/webview2/      → Ready to run
+```
+
+### Files Changed
+
+| Area | Files | What |
+|------|-------|------|
+| **Refresh Feature** | `WinDesktopCore.cs`, `Systray.cs` | Auto-reload timer + systray trigger |
+| **Settings** | `SettingsModel.cs`, `SettingsWallpaperView.xaml`, `SettingsWallpaperViewModel.cs` | UI controls for refresh config |
+| **Player** | `Form1.cs`, `Lively.Player.WebView2.csproj` | SDK-style build, cmd_reload placeholder |
+| **IL Patcher** | `tools/WebView2Patcher/` | Post-build tool for reload injection |
+
+---
+
 ## Contents
 - [About](#about)
 - [Features](#features)
